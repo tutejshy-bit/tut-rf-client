@@ -3,11 +3,6 @@
         <template #start>
             <Button size="small" class="mr-2" @click="transmit">Transmit</Button>
         </template>
-        <template #end>
-            <Button variant="text" size="small" text>
-                <e-icon icon='content-copy' size="x-small" />
-            </Button>
-        </template>
     </Toolbar>
     <TabView>
         <TabPanel header="File content">
@@ -17,21 +12,21 @@
                 </span>
             </div>
         </TabPanel>
-        <TabPanel header="Raw">
-            <div class="mx-auto pa-5 pt-0 flex-0 break-words file-content">
-                <span class="signal-raw-data text-left">
-                    <div v-for="raw in data.raw">{{ raw.join(' ') }}
-                        <divider />
-                    </div>
-                </span>
-            </div>
+        <TabPanel header="Analyse" v-if="inputData">
+            <span class="signal-raw-data text-left">
+                <PulsePlot :inputData="inputData"></PulsePlot>
+            </span>
         </TabPanel>
     </TabView>
 </template>
 <script>
 import { DeviceController } from '@/controllers/device'
+import PulsePlot from '@/components/PulsePlot.vue'
 
 export default {
+    components: {
+        PulsePlot
+    },
     props: {
         data: {
             type: Object,
@@ -45,12 +40,24 @@ export default {
             required: true
         }
     },
+
     setup({ data, filename, file }) {
         const { transmitFromFile } = DeviceController();
         const transmit = () => transmitFromFile(filename);
 
+        const getInputData = () => {
+            if (data.raw) {
+                return data.raw.flat().join(' ')
+            }
+
+            return '';
+        }
+
+        const inputData = getInputData();
+
         return {
-            transmit
+            transmit,
+            inputData,
         }
     }
 }

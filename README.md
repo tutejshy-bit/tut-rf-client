@@ -67,8 +67,6 @@ bun run lint
 ### Customize configuration
 
 See [Configuration Reference](https://vitejs.dev/config/).
-# ecrfv2web
-
 
 ## Disclaimer
 

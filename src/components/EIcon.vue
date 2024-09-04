@@ -51,6 +51,8 @@ import {
   mdiRadioTower,
   mdiPowerSleep,
   mdiCog,
+  mdiTextBoxMinusOutline,
+  mdiTextBoxPlusOutline,
 } from '@mdi/js';
 
 
@@ -117,6 +119,8 @@ export default {
             'radio-tower': mdiRadioTower,
             'power-sleep': mdiPowerSleep,
             'cog': mdiCog,
+            'text-box-plus': mdiTextBoxPlusOutline,
+            'text-box-minus': mdiTextBoxMinusOutline,
 
             'flipper-zero': IconFlipperZero,
         }
