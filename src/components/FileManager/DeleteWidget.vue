@@ -2,7 +2,7 @@
     <Dialog v-model:visible="visible" modal position="top" class="w-full max-w-96">
         <template #header>
             <span class="align-start">
-                <e-icon icon="trash-can-outline" size="small" /> Are you sure you want to remove?
+                <e-icon icon="trash-can-outline" size="small" /> <span class="align-top font-bold">Are you sure you want to remove?</span>
             </span>
         </template>
         <div class="mb-2">

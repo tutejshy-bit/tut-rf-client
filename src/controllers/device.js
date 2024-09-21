@@ -114,7 +114,7 @@ const useDevice = () => {
             case Action.Filesystem.Rename:
                 if (data.success === true) {
                     channelInfo.send('Rename success', data, MessageType.Filesystem, Action.Filesystem.Rename);
-                    renameRuntimeFileIfExists(from, to);
+                    renameRuntimeFileIfExists(data.from, data.to);
                 } else {
                     channelInfo.send('Rename failed', data, MessageType.Filesystem, Action.Filesystem.Rename);
                 }
@@ -263,7 +263,7 @@ const useDevice = () => {
             return;
         }
         
-        if (typeof successCallback === 'function') callbacks.filesList.push(successCallback(response));
+        if (typeof successCallback === 'function') callbacks.filesList.push(successCallback);
 
         try {
             deviceAdapter.getFilesList('')

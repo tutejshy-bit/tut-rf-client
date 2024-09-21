@@ -2,57 +2,62 @@
     <Dialog v-model:visible="visible" modal position="top" class="w-full max-w-96">
         <template #header>
             <span class="align-start">
-                <e-icon icon="file-move-outline" size="small"/> <span class="align-top font-bold">Move</span>
+                <e-icon icon="content-save-outline" size="small" /> <span class="align-top font-bold">Save as</span>
             </span>
         </template>
-        <div class="mb-2">
-            Move <span class="font-light">{{
-                path.length > 30 ? `${path.slice(0, 15)}...${path.slice(-15)}` : path
-            }} to</span>
+        <InputText id="filename" v-model="filename" placeholder="Name" class="w-full" />
+
+        <div class="m-2 mt-5 font-bold">
+            Save to
         </div>
-        <Tree  v-model:expandedKeys="expandedKeys" v-model:selectionKeys="selectedKey" @nodeSelect="selectDir" @nodeUnselect="unselectDir" :value="directories" selectionMode="single"
-              class="w-full md:w-30rem">
+        <Tree v-if="!loading" v-model:expandedKeys="expandedKeys" v-model:selectionKeys="selectedKey" @nodeSelect="selectDir"
+            @nodeUnselect="unselectDir" :value="directories" selectionMode="single" class="w-full md:w-30rem">
             <template #default="slotProps">
-                <e-icon :icon="slotProps.node.icon" size="small" prepended /> {{ slotProps.node.label !== '' ? slotProps.node.label : 'root' }}
+                <e-icon :icon="slotProps.node.icon" size="small" prepended /> {{ slotProps.node.label !== '' ?
+                    slotProps.node.label : 'root' }}
             </template>
         </Tree>
+        <div  v-else class="card flex justify-content-center">
+            <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" fill="var(--surface-ground)" aria-label="Custom ProgressSpinner" />
+        </div>
+
 
         <template #footer>
-            <Button severity="primary" @click="move">Move</Button>
+            <Button severity="primary" @click="save" :disabled="!isValid">Save</Button>
             <Button severity="secondary" @click="visible = false">Close</Button>
         </template>
     </Dialog>
 </template>
 
 <script>
-import {useStore} from '@/store/store'
-import {computed, onMounted, ref} from 'vue';
+import { useStore } from '@/store/store'
+import { computed, onMounted, ref } from 'vue';
 import { DeviceController } from '@/controllers/device'
 
 export default {
-    setup(props, {emit, expose}) {
+    setup(props, { emit, expose }) {
         const store = useStore()
         const device = DeviceController();
         const visible = ref(false);
         const path = ref('');
-        const name = ref('');
+        const filename = ref('');
         const selectedKey = ref('');
         const expandedKeys = ref([]);
+        const content = ref();
+        const loading = ref(false);
 
         const mapFilesToTree = (files, index = '', fullpath = '') => {
             let localIndex = 0;
             return files.filter((file) => {
                 const fileFullpath = fullpath !== '' ? fullpath + '/' + file.name : file.name;
-                const samePath = () => {
-                    return fileFullpath.startsWith(path.value) && (fileFullpath === path.value || fileFullpath.slice(path.value.length, path.value.length+1) === '/')
-                }
-                return file.type === 'directory' && (fileFullpath === '' || !samePath())
+
+                return file.type === 'directory'
             }).map(file => {
                 const fileFullpath = fullpath !== '' ? fullpath + '/' + file.name : file.name;
                 return {
                     key: index !== '' ? index + '-' + localIndex++ : localIndex,
                     label: file.name,
-                    data: {name: file.name, fullpath: fileFullpath, directory: fullpath},
+                    data: { name: file.name, fullpath: fileFullpath, directory: fullpath },
                     icon: 'folder-outline',
                     type: 'directory',
                     children: mapFilesToTree(file.contains, index !== '' ? index + '-' + localIndex : localIndex, fileFullpath),
@@ -70,33 +75,48 @@ export default {
             ]);
         });
 
-        onMounted(() => expandedKeys.value[0] = true);
+        onMounted(() => {
+            expandedKeys.value[0] = true;
+        });
 
         const selectedPath = ref(null);
         const selectDir = (node) => selectedPath.value = node.data.fullpath;
         const unselectDir = () => selectedPath.value = null;
 
-        const show = () => visible.value = true;
+        const show = () => {
+            visible.value = true;
+            if (!store.recordedSignals.files.length) {
+                loading.value = true;
+                device.requestRecordedSignals(() => loading.value = false);
+            }
+        }
         const hide = () => visible.value = false;
 
-        const move = () => {
-            if (selectedPath.value === null) return;
+        const isValid = computed(() => (selectedPath.value !== null && filename.value))
 
-            const to = selectedPath.value === '' ? name.value : selectedPath.value + '/' + name.value;
-            const from = path.value;
-            device.rename(from, to);
+        const save = async () => {
+            if (!isValid.value) return;
+
+            const to = (selectedPath.value === '' ? filename.value : selectedPath.value + '/' + filename.value) + '.sub';
+
+            const file = new File([content.value], to, { type: "text/plain" });
+
+            await device.upload(file);
+
             path.value = '';
+            filename.value = '';
             selectedKey.value = '';
             selectedPath.value = null;
             hide();
-            emit('moved', {from: from, to: to});
+            emit('saved', { name: filename, to: to });
         }
 
         expose({
             show: show,
             hide: hide,
             path: path,
-            name: name,
+            filename: filename,
+            content: content,
         })
 
         return {
@@ -106,9 +126,12 @@ export default {
             directories,
             selectedKey,
             expandedKeys,
-            move,
+            save,
             selectDir,
             unselectDir,
+            filename,
+            loading,
+            isValid,
         }
     },
 }

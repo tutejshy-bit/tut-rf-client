@@ -12,7 +12,8 @@
                         class="align-bottom" /> {{ node.data.name }}
                 </span>
                 <span v-else @click="toggleExpandDirectory(node.key)">
-                    <e-icon icon="folder-outline" :size="mobile ? 'x-small' : 'small'" prepended class="align-bottom" /> {{
+                    <e-icon icon="folder-outline" :size="mobile ? 'x-small' : 'small'" prepended class="align-bottom" />
+                    {{
                         node.data.name !== '' ? node.data.name : 'root' }}
                 </span>
             </template>
@@ -20,7 +21,7 @@
         <Column class="flex justify-end text-xs">
             <template #body="{ node }">
                 <template v-if="node.type === 'directory'">
-                    <span>
+                    <span class=" bg-white">
                         <Button v-if="actionCreateDirectory" text size="small"
                             @click="openCreateDirectoryPopup(node.data.fullpath)">
                             <template #icon>
@@ -30,7 +31,7 @@
                     </span>
                 </template>
                 <template v-else>
-                    <span>
+                    <span class=" bg-white">
                         <Button text size="small" v-if="actionTransmit" @click="transmit(node.data.fullpath)"
                             severity="success">
                             <template #icon>
@@ -38,7 +39,7 @@
                             </template>
                         </Button>
                     </span>
-                    <span>
+                    <span class=" bg-white">
                         <Button v-if="actionInfo" text size="small" severity="info"
                             @click="openSignalWindow(node.data.fullpath)">
                             <template #icon>
@@ -46,11 +47,17 @@
                             </template>
                         </Button>
                     </span>
+                    <span class=" bg-white">
+                        <Button v-if="actionDownload" text size="small" severity="info"
+                            @click="downloadFile(node.data.name, node.data.fullpath)">
+                            <template #icon>
+                                <e-icon icon='download' :size="mobile ? 'x-small' : 'small'" />
+                            </template>
+                        </Button>
+                    </span>
                 </template>
-
-
-                <template v-if="node.data.fullpath !== ''">
-                    <span>
+                <template v-if="node.data.fullpath !== '' && menuShow[node.key]">
+                    <span class=" bg-white">
                         <Button text size="small" v-if="actionRename"
                             @click="openRenamePopup(node.data.name, node.data.directory, node.data.fullpath)"
                             severity="info">
@@ -59,7 +66,7 @@
                             </template>
                         </Button>
                     </span>
-                    <span>
+                    <span class=" bg-white">
                         <Button v-if="actionMove" text size="small"
                             @click="openMovePopup(node.data.name, node.data.fullpath)" severity="info">
                             <template #icon>
@@ -67,7 +74,7 @@
                             </template>
                         </Button>
                     </span>
-                    <span>
+                    <span class=" bg-white">
                         <template v-if="actionDelete">
                             <Button v-if="node.children === undefined || node.children.length === 0" text size="small"
                                 @click="openDeletePopup(node.data.fullpath)" severity="warning">
@@ -84,6 +91,13 @@
                         </template>
                     </span>
                 </template>
+                <span class=" bg-white">
+                    <Button text size="small" severity="secondary" @click="menuShow[node.key] = !menuShow[node.key]">
+                        <template #icon>
+                            <e-icon icon='dots-vertical' :size="mobile ? 'x-small' : 'small'" />
+                        </template>
+                    </Button>
+                </span>
             </template>
         </Column>
     </TreeTable>
@@ -101,7 +115,8 @@ import SignalWindow from '@/components/SignalWindow.vue'
 import DeleteWidget from './DeleteWidget.vue'
 import MoveWidget from "./MoveWidget.vue";
 import { DeviceController } from '@/controllers/device'
-
+import { generateFile } from '@/utils/files'
+import { useStore } from '@/store/store'
 import { ref, onMounted, computed } from 'vue'
 import { mobile } from '@/utils/mobile-checker'
 
@@ -131,6 +146,10 @@ export default {
             type: Boolean,
             default: true
         },
+        actionDownload: {
+            type: Boolean,
+            default: true
+        },
         actionDelete: {
             type: Boolean,
             default: true
@@ -153,8 +172,10 @@ export default {
         'init'
     ],
     setup(props, { emit, expose }) {
-        const { transmitFromFile } = DeviceController();
+        const store = useStore();
+        const device = DeviceController();
         const tree = ref([]);
+        const menuShow = ref({});
         const fileicons = {
             "json": "code-json",
             "sub": 'flipper-zero'
@@ -216,7 +237,7 @@ export default {
             emit('updated');
         }
 
-        const transmit = (filename) => transmitFromFile(filename);
+        const transmit = (filename) => device.transmitFromFile(filename);
 
         const toggleExpandDirectory = (index) => {
             expandedDirectories.value[index] = !expandedDirectories.value[index];
@@ -225,6 +246,27 @@ export default {
         const getFileIconByName = computed(() => (filename) => fileicons[filename.split('.').pop().toLowerCase()] || 'file-outline');
 
         onMounted(() => emit('init'));
+
+        const generateAndDownload = (filename, content) => {
+            const file = generateFile(filename, content)
+
+            const downloadUrl = window.URL.createObjectURL(file);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(link.href)
+        }
+
+        const downloadFile = (filename, filepath) => {
+            if (store.files[filepath] === undefined) {
+                device.loadFileData(filepath, () => generateAndDownload(filename, store.files[filepath]));
+            } else {
+                generateAndDownload(filename, store.files[filepath]);
+            }
+        }
 
         return {
             tree,
@@ -251,6 +293,8 @@ export default {
             onDelete,
             toggleExpandDirectory,
             transmit,
+            downloadFile,
+            menuShow,
         };
     }
 }

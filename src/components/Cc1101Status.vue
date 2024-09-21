@@ -1,5 +1,5 @@
 <template>
-    <Tag severity="secondary" :rounded="false" class="mx-1 cursor-pointer" @click="toggle">
+    <Tag severity="secondary" :rounded="false" class="mx-1 cursor-pointer py-2" @click="toggle">
         <template #icon>
             <span class="mr-1 text-xs">{{ num + 1 }}:</span>
             <e-icon icon="power-sleep" v-if="store.deviceMode.cc1101[num] === State.Device.Idle" size="x-small" />

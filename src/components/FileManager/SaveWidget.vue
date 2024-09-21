@@ -2,7 +2,7 @@
     <Dialog v-model:visible="visible" modal class="w-1/2 max-w-96" position="top">
         <template #header>
             <span class="align-start">
-                <e-icon icon="content-save-outline" size="small" prepended /> <span class="align-top">{{ title }}</span>
+                <e-icon icon="content-save-outline" size="small" prepended /> <span class="align-top font-bold">{{ title }}</span>
             </span>
         </template>
         <InputText id="filename" v-model="filename" placeholder="File Name" class="w-full"/>

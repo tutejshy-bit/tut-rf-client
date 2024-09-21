@@ -22,7 +22,7 @@
                                     <template v-if="store.state.advancedMode">,
                                         <span class="font-bold">Bw</span> {{ recordConfig.bandwidth }} kHz,
                                         <span class="font-bold">DR</span> {{ recordConfig.dataRate }} kBaud
-                                        <template v-if="recordConfig.moduleation == 0">, <span class="font-bold">D</span> {{
+                                        <template v-if="recordConfig.modulation == 0">, <span class="font-bold">D</span> {{
                                             recordConfig.deviation }}
                                             kHz</template>
                                     </template>

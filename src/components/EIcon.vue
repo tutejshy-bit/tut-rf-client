@@ -53,6 +53,8 @@ import {
   mdiCog,
   mdiTextBoxMinusOutline,
   mdiTextBoxPlusOutline,
+  mdiDownload,
+  mdiApplicationEditOutline,
 } from '@mdi/js';
 
 
@@ -121,6 +123,8 @@ export default {
             'cog': mdiCog,
             'text-box-plus': mdiTextBoxPlusOutline,
             'text-box-minus': mdiTextBoxMinusOutline,
+            'download': mdiDownload,
+            'application-edit-outline': mdiApplicationEditOutline,
 
             'flipper-zero': IconFlipperZero,
         }

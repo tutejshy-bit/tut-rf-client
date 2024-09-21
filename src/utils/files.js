@@ -1,0 +1,1 @@
+export const generateFile = (filename, content) => new File([content], filename, { type: 'text/plain' });

@@ -15,6 +15,8 @@ const Modulation = {
     'MSK': 7,
 }
 
+const getKeyByValue = (object, value) => Object.keys(object).find(key => object[key] === value);
+
 const ConfigurationRegister = {
     MDMCFG4: '10', // Modem Configuration
     MDMCFG3: '11', // Modem Configuration
@@ -22,6 +24,7 @@ const ConfigurationRegister = {
     DEVIATN: '15', // Modem Configuration
     FREND0: '22', // Modem Configuration
 }
+
 function splitStringByWords(text, wordLimit) {
     const words = text.split(/\s+/); // Split by any whitespace
 
@@ -34,8 +37,6 @@ function splitStringByWords(text, wordLimit) {
 
     return chunks;
 }
-
-const binToHex = (bin) => parseInt(bin, 2).toString(16).toUpperCase();
 
 export default class FlipperZeroSubGenerator
 {
@@ -76,6 +77,12 @@ export default class FlipperZeroSubGenerator
             this.#errors.push(new Error(`Unsupported modulation ${modulation}. Supported ${supportedModulations.join(', ')}`));
         }
         this.#modulation = modulation;
+        return this;
+    }
+
+    setModulationNum(modulationNum)
+    {
+        this.setModulation(getKeyByValue(Modulation, modulationNum));
         return this;
     }
 

@@ -57,6 +57,7 @@ export const Predefined = {
         {
             name: 'AM 270',
             value: 'Ook270',
+            fzName: 'FuriHalSubGhzPresetOok270Async',
             modulation: 'ASK/OOK (AM)',
             bandwidth: '270.83 kHz',
             dataRate: '3.79 kBaud'
@@ -64,6 +65,7 @@ export const Predefined = {
         {
             name: 'AM 650',
             value: 'Ook650',
+            fzName: 'FuriHalSubGhzPresetOok650Async',
             modulation: 'ASK/OOK (AM)',
             bandwidth: '650.00 kHz',
             dataRate: '3.79 kBaud'
@@ -71,6 +73,7 @@ export const Predefined = {
         {
             name: 'FM 2.38',
             value: '2FSKDev238',
+            fzName: 'FuriHalSubGhzPreset2FSKDev238Async',
             modulation: '2-FSK (FM)',
             bandwidth: '270.83 kHz',
             deviation: '2.38 kHz',
@@ -79,6 +82,7 @@ export const Predefined = {
         {
             name: 'FM 47.6',
             value: '2FSKDev476',
+            fzName: 'FuriHalSubGhzPreset2FSKDev476Async',
             modulation: '2-FSK (FM)',
             bandwidth: '270.83 kHz',
             deviation: '47.6 kHz',

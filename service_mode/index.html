@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        * {
+            font-family: Monaco, monospace;
+        }
+
+        h1 {
+            color: #B5E853;
+            font-size: 30px;
+            text-align: center;
+        }
+
+        h3 {
+            margin-bottom: 0;
+        }
+
+        body {
+            background: #1A1A1A;
+            margin: 0;
+            padding: 0;
+            color: #FFF;
+        }
+
+        .content {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .editor {
+            width: 100%;
+            background: #121212;
+            color: #FFF;
+            border: 1px solid #000;
+            box-shadow: 0 10px 10px 2px #0003;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .line {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 10px 0;
+        }
+
+        .param {
+            color: #B5E853;
+            width: 150px;
+            text-align: left;
+        }
+
+        .vc {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .value,
+        select.value,
+        input[type="text"],
+        input[type="password"],
+        select,
+        input[type="file"] {
+            width: 100%;
+            background: #1A1A1A;
+            color: #FFF;
+            border: 1px solid #B5E853;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        input[type="file"] {
+            width: 250px;
+            height: 35px;
+            padding: 7px 10px;
+
+        }
+
+        input[type="file"]::file-selector-button {
+            background: #1A1A1A;
+            color: #B5E853;
+            border: 0;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background: #B5E853;
+            color: #1A1A1A;
+            cursor: pointer;
+        }
+
+        .tip {
+            color: #6CBDEC;
+            font-size: 12px;
+            margin-top: 5px;
+            width: 100%;
+        }
+
+        .tip.invalid {
+            color: #E85353;
+        }
+
+        input[type=button],
+        input[type=file] {
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        input[type=button] {
+            background: #1A1A1A;
+            color: #B5E853;
+            border: 1px solid #B5E853;
+            height: 35px;
+            max-width: 300px;
+        }
+
+        input[type=button]:hover {
+            background: #B5E853;
+            color: #1A1A1A;
+        }
+
+        .pbc {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .pb {
+            width: 100%;
+            height: 20px;
+            background-color: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .pbf {
+            width: 0;
+            height: 100%;
+            background-color: #B5E853;
+            transition: width 0.2s;
+        }
+
+        .pp {
+            margin-left: 10px;
+            color: #B5E853;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .bc {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .bc input[type=button] {
+            max-width: 48%;
+        }
+
+        #us {
+            margin-left: auto;
+        }
+
+        #ol {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            cursor: not-allowed;
+        }
+
+        .pbc,
+        #cf {
+            position: relative;
+            z-index: 1001;
+            /* Higher z-index than the overlay */
+        }
+
+        @media (max-width: 660px) {
+            .line {
+                flex-wrap: wrap;
+                justify-content: flex-start;
+            }
+
+            .param,
+            .vc {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Service Mode</h1>
+    <div class="content">
+        <input type="button" id="su" value="Update Firmware">
+    </div>
+
+    <div class="content hidden" id="fs">
+        <h3>Firmware Upload</h3>
+        <input type="file" id="ff" accept=".bin">
+        <input type="button" id="uf" value="Upload Firmware">
+        <div class="pbc hidden" id="pb">
+            <div class="pb">
+                <div class="pbf"></div>
+            </div>
+            <div class="pp">0%</div>
+        </div>
+        <input type="button" id="cf" class="hidden" value="Cancel Firmware Update">
+    </div>
+
+    <div class="content">
+        <h3>Edit Settings</h3>
+        <div id="editor" class="editor"></div>
+        <div class="bc">
+            <input type="button" id="rc" value="Reset Config">
+            <input type="button" id="us" value="Update Settings">
+        </div>
+    </div>
+    <div id="ol" class="hidden"></div>
+
+    <script>
+        const baudRates = ['300', '1200', '2400', '4800', '9600', '19200', '38400', '57600', '74880', '115200', '230400', '250000'];
+        const validationRules = {
+            wifi_mode: { tip: "WiFi mode can be either 'ap' for Access Point or 'client'.", validate: v => ['ap', 'client'].includes(v), type: 'select', options: ['ap', 'client'] },
+            ssid: { tip: "SSID of the WiFi network.", validate: v => v.length > 0, type: 'text' },
+            password: { tip: "Must be at least 8 characters.", validate: v => v.length >= 8, type: 'text' },
+            serial_baud_rate: { tip: "Baud rate for serial monitor", validate: v => baudRates.includes(v), type: 'select', options: baudRates }
+        };
+
+        const _ = (selector) => {
+            let el = null;
+
+            if (typeof selector === 'string') {
+                const isID = selector.charAt(0) === '#' || /^[a-zA-Z0-9_-]+$/.test(selector);
+                el = document.querySelector(isID && selector.charAt(0) !== '#' ? `#${selector}` : selector);
+            } else if (selector instanceof HTMLElement) {
+                el = selector;
+            }
+
+            return {
+                el,
+                hide() { if (el) el.classList.add('hidden'); return this; },
+                show() { if (el) el.classList.remove('hidden'); return this; },
+                on(event, fn) { if (el) el.addEventListener(event, fn); return this; },
+                text(txt) { if (el) el.textContent = txt; return this; },
+                css(property, value) { if (el) el.style[property] = value; return this; },
+                addClass(className) { if (el) el.classList.add(className); return this; },
+                removeClass(className) { if (el) el.classList.remove(className); return this; },
+                create(tag) { return _(document.createElement(tag)); },
+                append(child) { if (el) el.appendChild(child.el || child); return this; }
+            };
+        };
+
+        let settings = {};
+        let socket, otaFile, otaSize = 0, otaChunkSize = 1024, otaOffset = 0;
+
+        function renderEditor() {
+            const editor = _('editor').el;
+            editor.innerHTML = '';
+
+            Object.entries(settings).forEach(([param, value]) => {
+                const paramDiv = _().create('div').addClass('param').text(param);
+
+                let valueDiv;
+                if (validationRules[param].type === 'select') {
+                    valueDiv = _().create('select').addClass('value');
+                    validationRules[param].options.forEach(option => {
+                        const o = _().create('option').text(option).el;
+                        valueDiv.append(o);
+                        if (option === value) o.selected = true;
+                    });
+                } else {
+                    valueDiv = _().create('input').addClass('value').css('type', 'text');
+                    valueDiv.el.value = value;
+                    valueDiv.el.dataset.param = param;
+                }
+
+                const tipDiv = _().create('div').addClass('tip').text(validationRules[param].tip);
+                const vc = _().create('div').addClass('vc').append(valueDiv.el).append(tipDiv.el);
+                const line = _().create('div').addClass('line').append(paramDiv.el).append(vc.el);
+
+                valueDiv.on('blur', () => {
+                    settings[param] = valueDiv.el.value;
+                    validateField(param, valueDiv.el, tipDiv.el);
+                });
+
+                editor.appendChild(line.el);
+            });
+        }
+
+
+        function connectWebSocket() {
+            _('ol').show().text('Connecting');
+            socket = new WebSocket("ws://192.168.4.1/ws");
+
+            socket.onopen = () => {
+                _('fs').show();
+                _('su').hide();
+                resetUI();
+            };
+
+            socket.onclose = socket.onerror = () => {
+                alert("Device is not available. Please try again.");
+                _('fs').hide();
+                _('su').show();
+                resetUI();
+            };
+
+            socket.onmessage = (event) => {
+                const message = event.data;
+                const is = v => message.startsWith(v);
+                if (is("ota_ready_for_chunk")) {
+                    sendNextChunk();
+                } else if (is("progress:")) {
+                    const progress = parseFloat(message.split(":")[1]);
+                    updateProgressBar(progress);
+                } else if (is("ota_success")) {
+                    updateProgressBar(100);
+                    alert("OTA Update Complete! Rebooting...");
+                    resetUI();
+                } else if (is("ota_error")) {
+                    alert("Error: " + message.split(":")[1]);
+                    resetUI();
+                } else if (is("ota_canceled")) {
+                    alert("OTA Update Canceled.");
+                    resetUI();
+                }
+            };
+        }
+
+        function sendNextChunk() {
+            const nextChunkSize = Math.min(otaChunkSize, otaSize - otaOffset);
+            let reader = new FileReader();
+            let blob = otaFile.slice(otaOffset, otaOffset + nextChunkSize);
+
+            reader.onload = function () {
+                socket.send(reader.result);
+                otaOffset += nextChunkSize;
+
+                if (otaOffset >= otaSize) {
+                    socket.send("ota_end");
+                }
+            };
+
+            reader.readAsArrayBuffer(blob);
+        }
+
+        function resetUI() {
+            otaFile = null;
+            otaSize = 0;
+            otaOffset = 0;
+            isServerReadyForChunk = false;
+
+            updateProgressBar(0);
+
+            _('cf').hide();
+            _('pb').hide();
+            _('ol').hide().text('');
+        }
+
+        function updateProgressBar(progress) {
+            _('.pbf').css('width', progress + "%");
+            _('.pp').text(progress + "%");
+        }
+
+        // Initialization
+        loadSettings();
+        _('su').on('click', connectWebSocket);
+        _('cf').on('click', () => confirm("Are you sure you want to cancel the firmware update?") && socket.send("cancel_ota"));
+        _('uf').on('click', () => {
+            const fileInput = _('ff').el;
+            if (fileInput.files.length === 0) return alert("Please select a firmware file.");
+            _('pb').show();
+            _('ol').show();
+            startOTAUpdate(fileInput.files[0]);
+        });
+
+        function startOTAUpdate(file) {
+            otaFile = file;
+            otaSize = file.size;
+            socket.send("start_ota:" + otaSize);
+            _('cf').show();
+        }
+
+        function loadSettings() {
+            fetch('http://192.168.4.1/get_config').then(response => response.text()).then(data => {
+                settings = data.split('\n').reduce((res, line) => {
+                    const [key, value] = line.split('=');
+                    if (key && value) res[key.trim()] = value.trim();
+                    return res;
+                }, {});
+                renderEditor();
+            }).catch(console.error);
+        }
+
+        function validateField(param, valueDiv, tipDiv) {
+            const isValid = validationRules[param].validate(valueDiv.value);
+            if (tipDiv) tipDiv.classList.toggle('invalid', !isValid);
+            return isValid;
+        }
+
+        function validateAllFields() {
+            return Object.entries(validationRules).reduce((allValid, [param, validation]) => {
+                const inputElement = _(`input[data-param="${param}"]`).el;
+                if (inputElement) {
+                    const tipDiv = inputElement.nextElementSibling;
+                    const isValid = validation.validate(inputElement.value);
+                    tipDiv.classList.toggle('invalid', !isValid);
+                    return allValid && isValid;
+                }
+                return allValid;
+            }, true);
+        }
+
+        _('us').on('click', () => {
+            if (!validateAllFields()) return alert("Please correct the highlighted fields.");
+            const params = new URLSearchParams();
+            Object.entries(settings).forEach(([key, value]) => params.append(key, value));
+            fetch('http://192.168.4.1/set_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            }).then(response => {alert(response.ok ? 'Settings saved successfully.' : 'Failed to save settings.');loadSettings()}).catch(console.error);
+        });
+
+        _('rc').on('click', () => confirm("Are you sure you want to reset the configuration to default settings?") && resetConfig());
+
+        function resetConfig() {
+            fetch('http://192.168.4.1/reset_config')
+                .then(response => {
+                    if (response.ok) {
+                        alert('Configuration has been reset to default settings.');
+                        loadSettings();
+                    } else {
+                        alert('Failed to reset configuration.');
+                    }
+                })
+                .catch(error => console.error('Error resetting configuration:', error));
+        }
+    </script>
+</body>
+
+</html>

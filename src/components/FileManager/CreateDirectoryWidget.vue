@@ -2,7 +2,7 @@
     <Dialog v-model:visible="visible" modal position="top" class="w-full max-w-96">
         <template #header>
             <span class="align-start">
-                <e-icon icon="folder-plus-outline" size="small" /> Create Directory
+                <e-icon icon="folder-plus-outline" size="small" /> <span class="align-top font-bold">Create Directory</span>
             </span>
         </template>
         <div class="mb-2">

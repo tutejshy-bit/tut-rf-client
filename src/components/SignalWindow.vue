@@ -27,13 +27,20 @@ export default {
 
         const type = computed(() => path.value.slice(path.value.lastIndexOf(".")).toLowerCase());
         const fileData = computed(() => {
+            if (!file.value.trim().length) {
+                return {raw: ''};
+            }
             let data = {};
             switch (type.value) {
                 case '.json':
                     data = ParseTutJson(file.value);
                     break;
                 case '.sub':
-                    data = ParseFzSub(file.value);
+                    try{
+                        data = ParseFzSub(file.value);
+                    } catch {
+                        return {};
+                    }
                     break;
             }
 

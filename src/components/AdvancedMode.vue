@@ -1,5 +1,5 @@
 <template>
-    <span class="align-top">Advanced Mode</span> <InputSwitch v-model="store.state.advancedMode" color="primary" hide-details class="advanced-mode" :invalid="!store.state.advancedMode"></InputSwitch>
+    <span class="align-top mr-2">Advanced Mode</span> <InputSwitch v-model="store.state.advancedMode" color="primary" :invalid="!store.state.advancedMode" />
 </template>
   
 <script setup>
@@ -14,9 +14,3 @@ const props = defineProps({
     },
 });
 </script>
-
-<style scoped>
-.advanced-mode {
-    margin: 5px;
-}
-</style>

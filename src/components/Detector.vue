@@ -1,5 +1,5 @@
 <template>
-    <Panel toggleable class="mt-2" collapsed>
+    <Panel :toggleable="store.detectedFrequencies.length > 0" class="mt-2" collapsed>
         <template #header>
             <span class="text-nowrap">
                 <e-icon icon="radar" size="small" class="text-green-500" prepended /> <span class="align-top">Detector</span>
